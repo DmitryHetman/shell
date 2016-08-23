@@ -99,5 +99,11 @@ Rectangle {
                 duration: Units.mediumDuration
             }
         }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Units.mediumDuration
+            }
+        }
     }
 }

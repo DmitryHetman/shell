@@ -30,20 +30,15 @@
 #include <QtCore/QAbstractListModel>
 #include <QtQml/QQmlComponent>
 
-#include <GreenIsland/Server/ApplicationManager>
-#include <Hawaii/Settings/QGSettings>
-
-using namespace GreenIsland::Server;
-using namespace Hawaii;
-
 class Application;
+class ApplicationManager;
 
 class LauncherModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(ApplicationManager *applicationManager READ applicationManager WRITE
                        setApplicationManager NOTIFY applicationManagerChanged)
-    Q_ENUMS(Roles)
+
 public:
     enum Roles
     {
@@ -62,11 +57,11 @@ public:
         HasProgressRole,
         ProgressRole
     };
+    Q_ENUM(Roles)
 
     LauncherModel(QObject *parent = nullptr);
 
     ApplicationManager *applicationManager() const;
-    void setApplicationManager(ApplicationManager *appMan);
 
     QHash<int, QByteArray> roleNames() const;
 
@@ -77,27 +72,22 @@ public:
     Q_INVOKABLE Application *get(int index) const;
     Q_INVOKABLE int indexFromAppId(const QString &appId) const;
 
-    Q_INVOKABLE void pin(const QString &appId);
-    Q_INVOKABLE void unpin(const QString &appId);
+public Q_SLOTS:
+    void setApplicationManager(ApplicationManager *appMan);
+    void setupConnections(Application *app);
 
 Q_SIGNALS:
     void applicationManagerChanged();
 
 private:
-    QGSettings *m_settings = nullptr;
     ApplicationManager *m_appMan = nullptr;
-    QList<Application *> m_list;
+    QList<Application *> m_apps;
 
-    void pinLauncher(const QString &appId, bool pinned);
+    int pinAtIndex() const;
 
     bool moveRows(int sourceRow, int count, int destinationChild);
     bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
                   const QModelIndex &destinationParent, int destinationChild) Q_DECL_OVERRIDE;
-
-private Q_SLOTS:
-    void handleApplicationAdded(QString appId, pid_t pid);
-    void handleApplicationRemoved(QString appId, pid_t pid);
-    void handleApplicationFocused(QString appId);
 };
 
 QML_DECLARE_TYPE(LauncherModel)

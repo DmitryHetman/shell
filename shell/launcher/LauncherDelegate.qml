@@ -26,6 +26,7 @@
 
 import QtQuick 2.0
 import QtQuick.Controls 2.0
+import QtQuick.Controls.Material 2.0
 import Fluid.Controls 1.0
 import "../panel"
 
@@ -35,9 +36,8 @@ PanelItem {
     property int indexOfThisDelegate: index
     property string appId: model.appId
 
-    // TODO: Implement starting
-    highlightColor: /* model.starting ? Palette.colors.orange["500"] : */ "white"
-    highlightOpacity: model.active /*|| model.starting*/ ? 1 : model.running ? 0.4 : 0
+    highlightColor: model.starting ? Material.color(Material.Orange) : "white"
+    highlightOpacity: model.active || model.starting ? 1 : model.running ? 0.4 : 0
 
     ToolTip.delay: 2000
     ToolTip.timeout: 3000
@@ -61,6 +61,24 @@ PanelItem {
             menu.close();
         else
             menu.open();
+    }
+
+    SequentialAnimation on y {
+        loops: Animation.Infinite
+        running: model.starting
+        alwaysRunToEnd: true
+
+        NumberAnimation {
+            from: 0; to: -launcherItem.height/2
+            easing.type: Easing.OutExpo; duration: 300
+        }
+
+        NumberAnimation {
+            from: -launcherItem.height/2; to: 0
+            easing.type: Easing.OutBounce; duration: 1000
+        }
+
+        PauseAnimation { duration: 500 }
     }
 
     Icon {

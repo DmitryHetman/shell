@@ -71,6 +71,6 @@ Rectangle {
 
     Ripple {
         anchors.fill: parent
-        onClicked: appsModel.trigger(model.desktopFile)
+        onClicked: appsProxyModel.get(index).launch()
     }
 }
