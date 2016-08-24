@@ -50,7 +50,7 @@ private Q_SLOTS:
 private:
     GreenIsland::Server::ApplicationManager *m_appMan = nullptr;
     QGSettings *m_settings = nullptr;
-    QList<Application *> m_apps;
+    QMap<QString, Application *> m_apps;
 
     void readAppLink(const QDomElement &xml, const QString &categoryName);
 };

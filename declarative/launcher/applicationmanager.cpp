@@ -25,13 +25,13 @@ ApplicationManager::ApplicationManager(QObject *parent)
 
 Application *ApplicationManager::getApplication(const QString &appId)
 {
-    Q_FOREACH (Application *app, m_apps) {
-        if (app->appId() == appId)
-            return app;
-    }
+    Application *app = m_apps[appId];
 
-    Application *app = new Application(appId, QStringList(), this);
-    m_apps.append(app);
+    if (app != nullptr)
+        return app;
+
+    app = new Application(appId, QStringList(), this);
+    m_apps[app->appId()] = app;
 
     QObject::connect(app, &Application::launched, [=]() { Q_EMIT applicationLaunched(app); });
     QObject::connect(app, &Application::pinnedChanged, [=]() {
@@ -59,20 +59,24 @@ QList<Application *> ApplicationManager::applications() const
 {
     QList<Application *> apps;
 
-    Q_FOREACH (Application *app, m_apps) {
+    Q_FOREACH (Application *app, m_apps.values()) {
         if (app->categories().count() > 0 && app->isValid())
             apps.append(app);
     }
+
+    qSort(apps.begin(), apps.end(), appLessThan);
 
     return apps;
 }
 
 QList<Application *> ApplicationManager::pinnedApps() const
 {
+    // We have to look up the pinnedLaunchers list instead of just getting all pinned
+    // apps because the apps map isn't sorted
     QList<Application *> apps;
     QStringList pinnedLaunchers = m_settings->value("pinnedLaunchers").toStringList();
 
-    Q_FOREACH (Application *app, m_apps) {
+    Q_FOREACH (Application *app, m_apps.values()) {
         if (pinnedLaunchers.contains(app->appId()))
             apps.append(app);
     }
@@ -116,15 +120,6 @@ void ApplicationManager::handleApplicationAdded(QString appId, pid_t pid)
 {
     appId = DesktopFile::canonicalAppId(appId);
 
-    Q_FOREACH (Application *app, m_apps) {
-        if (app->appId() == appId) {
-            app->setState(Application::Running);
-            app->m_pids.insert(pid);
-            break;
-        }
-    }
-
-    // For whatever reason, this application isn't shown in the menu, so we need to add it now
     Application *app = getApplication(appId);
     app->setState(Application::Running);
     app->m_pids.insert(pid);
@@ -139,16 +134,12 @@ void ApplicationManager::handleApplicationRemoved(QString appId, pid_t pid)
 
     UsageTracker::instance()->applicationFocused(QString());
 
-    Q_FOREACH (Application *app, m_apps) {
-        if (app->appId() == appId) {
-            app->m_pids.remove(pid);
+    Application *app = getApplication(appId);
 
-            if (app->m_pids.count() == 0) {
-                app->setState(Application::NotRunning);
-            }
+    app->m_pids.remove(pid);
 
-            break;
-        }
+    if (app->m_pids.count() == 0) {
+        app->setState(Application::NotRunning);
     }
 }
 
@@ -156,18 +147,16 @@ void ApplicationManager::handleApplicationFocused(QString appId)
 {
     appId = DesktopFile::canonicalAppId(appId);
 
-    Application *found = nullptr;
+    Application *app = getApplication(appId);
 
-    Q_FOREACH (Application *app, m_apps) {
-        if (app->appId() == appId) {
-            found = app;
-            app->setActive(true);
-        } else {
+    app->setActive(true);
+
+    Q_FOREACH (Application *app, m_apps.values()) {
+        if (app->appId() != appId)
             app->setActive(false);
-        }
     }
 
-    if (found != nullptr && !found->desktopFile()->noDisplay())
+    if (!app->desktopFile()->noDisplay())
         UsageTracker::instance()->applicationFocused(appId);
     else
         UsageTracker::instance()->applicationFocused(QString());
@@ -210,8 +199,6 @@ void ApplicationManager::refresh()
             }
         }
     }
-
-    qSort(m_apps.begin(), m_apps.end(), appLessThan);
 
     QStringList pinnedLaunchers = m_settings->value("pinnedLaunchers").toStringList();
     Q_FOREACH (const QString &appId, pinnedLaunchers)
