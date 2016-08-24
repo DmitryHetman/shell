@@ -47,12 +47,33 @@ void AppsModel::setApplicationManager(ApplicationManager *appMan)
     if (m_appMan == appMan)
         return;
 
-    beginResetModel();
     m_appMan = appMan;
-    m_apps = appMan->applications();
-    endResetModel();
+
+    if (appMan != nullptr) {
+        beginResetModel();
+        m_apps = appMan->applications();
+        endResetModel();
+
+        connect(appMan, &ApplicationManager::applicationAdded, this, &AppsModel::setupConnections);
+
+        Q_FOREACH (Application *app, appMan->applications()) {
+            setupConnections(app);
+        }
+    }
 
     Q_EMIT applicationManagerChanged();
+}
+
+void AppsModel::setupConnections(Application *app)
+{
+    connect(app, &Application::stateChanged, [=]() {
+        int i = m_apps.indexOf(app);
+
+        if (i >= 0) {
+            QModelIndex modelIndex = index(i);
+            Q_EMIT dataChanged(modelIndex, modelIndex);
+        }
+    });
 }
 
 QHash<int, QByteArray> AppsModel::roleNames() const
@@ -67,6 +88,7 @@ QHash<int, QByteArray> AppsModel::roleNames() const
     roles.insert(FilterInfoRole, "filterInfo");
     roles.insert(RunningRole, "running");
     roles.insert(CategoriesRole, "categories");
+    roles.insert(AppIdRole, "appId");
     return roles;
 }
 

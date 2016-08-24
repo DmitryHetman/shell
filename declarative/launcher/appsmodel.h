@@ -66,6 +66,9 @@ Q_SIGNALS:
     void appLaunched(Application *app);
     void applicationManagerChanged();
 
+private Q_SLOTS:
+    void setupConnections(Application *app);
+
 private:
     ApplicationManager *m_appMan = nullptr;
     QList<Application *> m_apps;

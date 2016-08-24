@@ -60,6 +60,22 @@ WindowCompositor {
         SessionInterface.idle = true;
     }
 
+    ApplicationManager {
+        id: applicationManager
+
+        applicationManager: compositor.applicationManager
+    }
+
+    LauncherModel {
+        id: launcherModel
+        applicationManager: applicationManager
+    }
+
+    AppsModel {
+        id: appsModel
+        applicationManager: applicationManager
+    }
+
     DateTime {
         id: dateTime
     }

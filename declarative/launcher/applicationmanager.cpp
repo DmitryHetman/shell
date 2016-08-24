@@ -52,9 +52,33 @@ Application *ApplicationManager::getApplication(const QString &appId)
     return app;
 }
 
+void ApplicationManager::launch(const QString &appId) { getApplication(appId)->launch(); }
 void ApplicationManager::quit(const QString &appId) { m_appMan->quit(appId); }
 
-QList<Application *> ApplicationManager::applications() const { return m_apps; }
+QList<Application *> ApplicationManager::applications() const
+{
+    QList<Application *> apps;
+
+    Q_FOREACH (Application *app, m_apps) {
+        if (app->categories().count() > 0 && app->isValid())
+            apps.append(app);
+    }
+
+    return apps;
+}
+
+QList<Application *> ApplicationManager::pinnedApps() const
+{
+    QList<Application *> apps;
+    QStringList pinnedLaunchers = m_settings->value("pinnedLaunchers").toStringList();
+
+    Q_FOREACH (Application *app, m_apps) {
+        if (pinnedLaunchers.contains(app->appId()))
+            apps.append(app);
+    }
+
+    return apps;
+}
 
 GreenIsland::Server::ApplicationManager *ApplicationManager::applicationManager() const
 {

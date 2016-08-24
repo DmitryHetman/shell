@@ -42,6 +42,18 @@ Rectangle {
         ColorAnimation { duration: Units.mediumDuration }
     }
 
+    Rectangle {
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            bottom: parent.bottom
+        }
+
+        width: 50
+        height: 2
+        color: Material.accentColor
+        visible: model.running
+    }
+
     Icon {
         id: icon
         anchors {
@@ -71,6 +83,12 @@ Rectangle {
 
     Ripple {
         anchors.fill: parent
-        onClicked: appsProxyModel.get(index).launch()
+        onClicked: {
+            if (model.running) {
+                // TODO: Active app windows
+            } else {
+                applicationManager.launch(model.appId)
+            }
+        }
     }
 }

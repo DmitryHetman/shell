@@ -58,6 +58,8 @@ void LauncherModel::setApplicationManager(ApplicationManager *appMan)
         Q_FOREACH (Application *app, appMan->applications()) {
             setupConnections(app);
         }
+
+        m_apps = appMan->pinnedApps();
     }
 }
 
@@ -81,6 +83,15 @@ void LauncherModel::setupConnections(Application *app)
                 m_apps.append(app);
                 endInsertRows();
             }
+        }
+    });
+
+    connect(app, &Application::activeChanged, [=]() {
+        int i = m_apps.indexOf(app);
+
+        if (i >= 0) {
+            QModelIndex modelIndex = index(i);
+            Q_EMIT dataChanged(modelIndex, modelIndex);
         }
     });
 

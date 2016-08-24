@@ -27,9 +27,11 @@ public:
     Application *getApplication(const QString &appId);
 
     QList<Application *> applications() const;
+    QList<Application *> pinnedApps() const;
 
 public Q_SLOTS:
     void quit(const QString &appId);
+    void launch(const QString &appId);
 
     void setApplicationManager(GreenIsland::Server::ApplicationManager *appMan);
 
@@ -46,8 +48,8 @@ private Q_SLOTS:
     void handleApplicationFocused(QString appId);
 
 private:
-    GreenIsland::Server::ApplicationManager *m_appMan;
-    QGSettings *m_settings;
+    GreenIsland::Server::ApplicationManager *m_appMan = nullptr;
+    QGSettings *m_settings = nullptr;
     QList<Application *> m_apps;
 
     void readAppLink(const QDomElement &xml, const QString &categoryName);
