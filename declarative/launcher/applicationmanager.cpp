@@ -12,7 +12,10 @@
 
 Q_LOGGING_CATEGORY(APPLICATION_MANAGER, "hawaii.qml.launcher.applicationmanager")
 
-bool appLessThan(Application *e1, Application *e2) { return e1->name() < e2->name(); }
+bool appLessThan(Application *e1, Application *e2)
+{
+    return e1->name() < e2->name();
+}
 
 ApplicationManager::ApplicationManager(QObject *parent)
     : QObject(parent)
@@ -37,13 +40,15 @@ Application *ApplicationManager::getApplication(const QString &appId)
     QObject::connect(app, &Application::pinnedChanged, [=]() {
         // Currently pinned launchers
         QStringList pinnedLaunchers =
-                m_settings->value(QStringLiteral("pinnedLaunchers")).toStringList();
+            m_settings->value(QStringLiteral("pinnedLaunchers")).toStringList();
 
         // Add or remove from the pinned launchers
-        if (app->isPinned())
-            pinnedLaunchers.append(app->appId());
-        else
+        if (app->isPinned()) {
+            if (!pinnedLaunchers.contains(app->appId()))
+                pinnedLaunchers.append(app->appId());
+        } else {
             pinnedLaunchers.removeOne(app->appId());
+        }
         m_settings->setValue(QStringLiteral("pinnedLaunchers"), pinnedLaunchers);
     });
 
@@ -52,14 +57,20 @@ Application *ApplicationManager::getApplication(const QString &appId)
     return app;
 }
 
-void ApplicationManager::launch(const QString &appId) { getApplication(appId)->launch(); }
-void ApplicationManager::quit(const QString &appId) { m_appMan->quit(appId); }
+void ApplicationManager::launch(const QString &appId)
+{
+    getApplication(appId)->launch();
+}
+void ApplicationManager::quit(const QString &appId)
+{
+    m_appMan->quit(appId);
+}
 
 QList<Application *> ApplicationManager::applications() const
 {
     QList<Application *> apps;
 
-    Q_FOREACH (Application *app, m_apps.values()) {
+    for (Application *app : m_apps) {
         if (app->categories().count() > 0 && app->isValid())
             apps.append(app);
     }
@@ -76,7 +87,7 @@ QList<Application *> ApplicationManager::pinnedApps() const
     QList<Application *> apps;
     QStringList pinnedLaunchers = m_settings->value("pinnedLaunchers").toStringList();
 
-    Q_FOREACH (Application *app, m_apps.values()) {
+    for (Application *app : m_apps) {
         if (pinnedLaunchers.contains(app->appId()))
             apps.append(app);
     }
@@ -151,7 +162,7 @@ void ApplicationManager::handleApplicationFocused(QString appId)
 
     app->setActive(true);
 
-    Q_FOREACH (Application *app, m_apps.values()) {
+    for (Application *app : m_apps) {
         if (app->appId() != appId)
             app->setActive(false);
     }
@@ -201,7 +212,7 @@ void ApplicationManager::refresh()
     }
 
     QStringList pinnedLaunchers = m_settings->value("pinnedLaunchers").toStringList();
-    Q_FOREACH (const QString &appId, pinnedLaunchers)
+    for (const QString &appId : pinnedLaunchers)
         getApplication(appId)->setPinned(true);
 
     Q_EMIT refreshed();
