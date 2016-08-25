@@ -85,7 +85,8 @@ Rectangle {
         anchors.fill: parent
         onClicked: {
             if (model.running) {
-                // TODO: Active app windows
+                compositor.activateWindows(model.appId)
+                appLaunched() // Not really, but we want the same thing to happen
             } else {
                 applicationManager.launch(model.appId)
             }
